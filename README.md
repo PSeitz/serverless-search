@@ -1,2 +1,2 @@
-# diskbased_json_array
-file based random access json array
+# serverless-search
+serverless search engine
