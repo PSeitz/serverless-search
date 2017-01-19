@@ -1,0 +1,29 @@
+{
+  "name": "serverless-search",
+  "version": "1.0.0",
+  "description": "a serverless json based search engine",
+  "main": "searchindex.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PSeitz/serverless-search.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PSeitz/serverless-search/issues"
+  },
+  "homepage": "https://github.com/PSeitz/serverless-search#readme",
+  "dependencies": {
+    "diskbased_json_array": "^1.0.4",
+    "fast-levenshtein": "^2.0.5",
+    "mkdirp": "^0.5.1"
+  },
+  "devDependencies": {
+    "mocha": "^3.2.0",
+    "chai": "^3.5.0",
+    "chai-as-promised": "^6.0.0"
+  }
+}
