@@ -1,8 +1,8 @@
 {
   "name": "serverless-search",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "a serverless json based search engine",
-  "main": "searchindex.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -9,7 +9,6 @@ function ensureFolderExists(dbfolder){
     mkdirp.sync(dbfolder)
 }
 
-
 function createDatabase(data, dbfolder, indices, filterSchema){
     
     let parentDir = process.cwd()
@@ -30,7 +29,7 @@ function createDatabase(data, dbfolder, indices, filterSchema){
 }
 
 function createDatabaseFromFile(filename, dbfolder, indices, filterSchema){
-    let data = require('./'+filename)
+    let data = JSON.parse(require('fs').readFileSync(filename))
     return createDatabase(data, dbfolder, indices, filterSchema)
 }
 
