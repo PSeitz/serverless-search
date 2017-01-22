@@ -120,6 +120,18 @@ describe('Serverless DB', function() {
         .should.eventually.have.length(1)
     })
 
+    it('should search without firstCharExactMatch', function() {
+        return searchDb.searchDb('mochaTest', {search: {
+            term:'najestätischer',
+            path:'meanings.ger[]',
+            levenshtein_distance:1
+        }}).then(res => {
+            // console.log(JSON.stringify(res, null, 2))
+            return res
+        })
+        .should.eventually.have.length(1)
+    })
+
     it('should search word non tokenized', function() {
         console.log("test search123123123")
         console.log(process.cwd())

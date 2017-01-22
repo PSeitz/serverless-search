@@ -183,15 +183,14 @@ function getDefaultScore(term1, term2){
     return 2/(levenshtein.get(term1, term2) + 1 )
 }
 
-function addBoost(request, subObjIdHits, result){
-    if (request.boost) {
-        // let boostPath = removeArrayMarker(request.boost.path)
-        let boostPath = request.boost.path
-        let boostkvStore = new IndexKeyValueStore(boostPath+'.boost.subObjId', boostPath+'.boost.value')
-        let tehBoost = subObjIdHits.map(subObjId => request.boost.fun(boostkvStore.getValue(subObjId) + request.boost.param))
-        for (var i = 0; i < result.valueIdDocidScores.length; i++) {
-            result.valueIdDocidScores[i] = result.valueIdDocidScores[i] * tehBoost[i]
-        }
+function addBoost(request, hits){
+    let boostPath = request.boost.path
+    let boostkvStore = new IndexKeyValueStore(boostPath+'.boost.subObjId', boostPath+'.boost.value')
+    for (let valueId in hits) {
+        let score = request.boost.fun(boostkvStore.getValue(valueId) + (request.boost.param || 0) )
+        // console.log("THE SCORE")
+        // console.log(score)
+        hits[valueId] += score
     }
 }
 
@@ -227,13 +226,15 @@ function addTokenResults(hits, path, term){
 /* Returns then value ids and scores*/
 function getHitsInField(path, options, term){
     let hits = {} // id:score
+    let lineoptions = {path:path}
     let checks = []
     if (options.exact !== undefined) checks.push(line => line == term)
     if (options.levenshtein_distance !== undefined) checks.push(line => levenshtein.get(line, term) <= options.levenshtein_distance)
     if (options.startsWith !== undefined) checks.push(line => line.startsWith(term))
     if (options.customCompare !== undefined) checks.push(line => options.customCompare(line))
+    if (options.firstCharExactMatch) lineoptions.char = term.charAt(0)
 
-    return getTextLines({path:path, char:term.charAt(0)}, (line, linePos) => {
+    return getTextLines(lineoptions, (line, linePos) => {
         // console.log("Check: "+line + " linePos:"+linePos)
         if (checks.every(check => check(line))){
             console.log("Hit: "+line + " linePos:"+linePos)
@@ -241,7 +242,6 @@ function getHitsInField(path, options, term){
             let score = options.customScore ? options.customScore(line, term) : getDefaultScore(line, term)
             if(hits[linePos]) hits[linePos] += score
             else hits[linePos] = score
-
         }
     }).then(() => {
         return hits
@@ -289,15 +289,7 @@ function search(request){
             let pathName = util.getPathName(path, isLast) // last path is for the textindex
 
             if (request.boost && request.boost.path && request.boost.path.indexOf(pathName) >= 0) { // TODO move towards path
-                // addBoost(request, subObjIdHits, result)
-                let boostPath = request.boost.path
-                let boostkvStore = new IndexKeyValueStore(boostPath+'.boost.subObjId', boostPath+'.boost.value')
-                for (let valueId in hits) {
-                    let score = request.boost.fun(boostkvStore.getValue(valueId) + (request.boost.param || 0) )
-                    // console.log("THE SCORE")
-                    // console.log(score)
-                    hits[valueId] += score
-                }
+                addBoost(request, hits)
             }
 
             let kvStore = new IndexKeyValueStore(pathName+'.valueIdToParent.valIds', pathName+'.valueIdToParent.mainIds')                
