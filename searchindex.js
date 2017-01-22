@@ -273,11 +273,62 @@ function suggest(path, term){
     .then(sortByScore)
 }
 
+function intersection(o1, o2) {
+    return Object.keys(o1).concat(Object.keys(o2)).sort().reduce(function (r, a, i, aa) {
+        if (i && aa[i - 1] === a) {
+            r.push(a);
+        }
+        return r;
+    }, []);
+}
+
 function search(request){
+    return searchUnrolled(request)
+        .then(hitsToArray)
+        .then(sortByScore)
+}
+
+function searchUnrolled(request){
+    if (request.OR) {
+        return Promise.all(request.OR.map(req => searchUnrolled(req)))
+        .then(results => {
+            return [results].reduce((p, c) => Object.assign(p, c));
+        })
+    }else if(request.AND){
+        return Promise.all(request.AND.map(req => searchUnrolled(req)))
+        .then(res => [results]
+            .reduce((p, c) => intersection(p, c)
+            .map(commonKey => ((p.commonKey.score > c.commonKey.score) ? p.commonKey : c.commonKey))))
+    }else{
+        return searchRaw(request)
+    }
+}
+
+function searchRaw(request){
 
     let path = request.search.path
     let term = request.search.term.toLowerCase()
     let options = request.search
+
+    // let request = {
+    //     OR: [
+    //         {
+    //             search: {
+    //                 term:'maje',
+    //                 path:'meanings.ger[]',
+    //                 levenshtein_distance:1
+    //             }
+    //         },
+    //         {
+    //             search: {
+    //                 term:'maje',
+    //                 path:'meanings.eng[]',
+    //                 levenshtein_distance:1
+    //             }
+    //         },
+
+    //     ]
+    // }
 
     //     let request = {
     //     search: {
@@ -291,12 +342,12 @@ function search(request){
     //     }
     // }
 
-    let origPath = path
-    path = removeArrayMarker(path)
+    // let origPath = path
+    // path = removeArrayMarker(path)
     console.time('SearchTime Netto')
 
-    return getHitsInField(origPath, options, term)
-    .then(res => addTokenResults(res, origPath, term))
+    return getHitsInField(path, options, term)
+    .then(res => addTokenResults(res, path, term))
     .then(hits => {
 
         console.log("hits")
@@ -304,7 +355,7 @@ function search(request){
 
         let nextLevelHits = {}
 
-        let paths = util.getStepsToAnchor(origPath)
+        let paths = util.getStepsToAnchor(path)
 
         for(let i=paths.length ; i -- > 0;){
             let path = paths[i]
@@ -328,11 +379,13 @@ function search(request){
             nextLevelHits = {}
         }
 
-        let mainWithScore = sortByScore(hitsToArray(hits))
+        return hits
 
-        console.log(mainWithScore)
-        console.timeEnd('SearchTime Netto')
-        return mainWithScore
+        // let mainWithScore = sortByScore(hitsToArray(hits))
+
+        // console.log(mainWithScore)
+        // console.timeEnd('SearchTime Netto')
+        // return mainWithScore
     })
 
 
