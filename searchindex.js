@@ -214,8 +214,8 @@ function addTokenResults(hits, path, term){
         return tokenKVData.getTextForValueId(tokenParentvalId)
         .then(parentString => {
             let score = getDefaultScore(parentString, term)
-            if(hits[tokenParentvalId]) hits[tokenParentvalId] += score
-            else hits[tokenParentvalId] = score
+            if(hits[tokenParentvalId]) hits[tokenParentvalId].score += score
+            else hits[tokenParentvalId] = {score:score}
         })
     }))
     .then(() => hits)
@@ -232,7 +232,8 @@ function getHitsInField(path, options, term){
     if (options.levenshtein_distance !== undefined) checks.push(line => levenshtein.get(line, term) <= options.levenshtein_distance)
     if (options.startsWith !== undefined) checks.push(line => line.startsWith(term))
     if (options.customCompare !== undefined) checks.push(line => options.customCompare(line))
-    if (options.firstCharExactMatch) lineoptions.char = term.charAt(0)
+
+    if (options.firstCharExactMatch || options.exact || options.levenshtein_distance === 0 || options.startsWith !== undefined) lineoptions.char = term.charAt(0)
 
     return getTextLines(lineoptions, (line, linePos) => {
         // console.log("Check: "+line + " linePos:"+linePos)
@@ -240,14 +241,37 @@ function getHitsInField(path, options, term){
             console.log("Hit: "+line + " linePos:"+linePos)
 
             let score = options.customScore ? options.customScore(line, term) : getDefaultScore(line, term)
-            if(hits[linePos]) hits[linePos] += score
-            else hits[linePos] = score
+            if(hits[linePos]) hits[linePos].score += score
+            else hits[linePos] = {score:score}
+
+            if (options.includeValue) hits[linePos].value = line
         }
     }).then(() => {
         return hits
     })
 }
 
+
+function hitsToArray(hits){
+    let mainWithScore = []
+    for (let valueId in hits) {
+        hits[valueId].id = parseInt(valueId, 10)
+        mainWithScore.push(hits[valueId])
+    }
+    return mainWithScore
+}
+
+function sortByScore(hits) {
+    return hits.sort(function(a, b) {
+        return ((a.score > b.score) ? -1 : ((a.score == b.score) ? 0 : 1))
+    })
+}
+
+function suggest(path, term){
+    return getHitsInField(path, {startsWith:true, includeValue:true}, term)
+    .then(hitsToArray)
+    .then(sortByScore)
+}
 
 function search(request){
 
@@ -279,7 +303,6 @@ function search(request){
         console.log(hits)
 
         let nextLevelHits = {}
-        let mainWithScore = []
 
         let paths = util.getStepsToAnchor(origPath)
 
@@ -294,32 +317,24 @@ function search(request){
 
             let kvStore = new IndexKeyValueStore(pathName+'.valueIdToParent.valIds', pathName+'.valueIdToParent.mainIds')                
             for (let valueId in hits) {
-                let score = hits[valueId]
+                let score = hits[valueId].score
                 let values = kvStore.getValues(parseInt(valueId, 10))
                 values.forEach(parentValId => {
-                    if(nextLevelHits[parentValId]) nextLevelHits[parentValId] += score
-                    else nextLevelHits[parentValId] = score
+                    if(nextLevelHits[parentValId]) nextLevelHits[parentValId].score += score
+                    else nextLevelHits[parentValId] = {score:score}
                 })
             }
             hits = nextLevelHits
             nextLevelHits = {}
-
         }
 
-        for (let valueId in hits) {
-            mainWithScore.push({'id':parseInt(valueId, 10), 'score':hits[valueId]})
-        }
-
-        mainWithScore.sort(function(a, b) {
-            return ((a.score > b.score) ? -1 : ((a.score == b.score) ? 0 : 1))
-        })
+        let mainWithScore = sortByScore(hitsToArray(hits))
 
         console.log(mainWithScore)
         console.timeEnd('SearchTime Netto')
         return mainWithScore
     })
 
-    // })
 
 }
 
@@ -327,4 +342,7 @@ function search(request){
 let service = {}
 service.getHitsInField = getHitsInField
 service.search = search
+service.hitsToArray = hitsToArray
+service.sortByScore = sortByScore
+service.suggest = suggest
 module.exports = service

@@ -84,6 +84,7 @@ let data = [
 
 let searchDb = require('./searchDb')
 
+let searchindex = require('./searchindex')
 
 describe('Serverless DB', function() {
     let dbfolder = 'mochaTest'
@@ -192,6 +193,17 @@ describe('Serverless DB', function() {
             return res
         })
         .should.eventually.have.length(2)
+    })
+
+
+    it('should search and boost', function() {
+        console.log("test search123123123")
+        console.log(process.cwd())
+        return searchindex.suggest('meanings.ger[]', 'majes').then(res => {
+            console.log(JSON.stringify(res, null, 2))
+            return Object.keys(res)
+        })
+        .should.eventually.have.length(5)
     })
 
     
