@@ -88,7 +88,7 @@ let searchindex = require('./searchindex')
 
 describe('Serverless DB', function() {
     let dbfolder = 'mochaTest'
-    this.timeout(10000)
+    this.timeout(20000)
     before(function(done) {
         database.createDatabase(data, dbfolder, [
             { fulltext:'ent_seq' },
@@ -161,6 +161,30 @@ describe('Serverless DB', function() {
             return res
         })
         .should.eventually.have.length(1)
+    })
+
+    it('AND connect hits', function() {
+        return searchDb.searchDb('mochaTest', {
+            AND: [{search: { term:'Majestät', path:'meanings.ger[]'}},
+                {search: { term:'majestic', path:'meanings.eng[]'}}]
+        })
+        .should.eventually.have.length(1)
+    })
+
+    it('AND missing hits', function() {
+        return searchDb.searchDb('mochaTest', {
+            AND: [{search: { term:'Majestät', path:'meanings.ger[]'}},
+                {search: { term:'urge', path:'meanings.eng[]'}}]
+        })
+        .should.eventually.have.length(0)
+    })
+
+    it('OR Connect hits', function() {
+        return searchDb.searchDb('mochaTest', {
+            OR: [{search: { term:'Majestät', path:'meanings.ger[]'}},
+                {search: { term:'urge', path:'meanings.eng[]'}}]
+        })
+        .should.eventually.have.length(2)
     })
 
     it('should extract corect texts', function() {

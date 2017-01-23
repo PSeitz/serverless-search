@@ -228,11 +228,17 @@ function getHitsInField(path, options, term){
     let hits = {} // id:score
     let lineoptions = {path:path}
     let checks = []
+
+    //exact when nothing else set
+    if (options.exact === undefined && options.levenshtein_distance === undefined && options.startsWith === undefined && options.customCompare === undefined)
+        options.exact = true
+
     if (options.exact !== undefined) checks.push(line => line == term)
     if (options.levenshtein_distance !== undefined) checks.push(line => levenshtein.get(line, term) <= options.levenshtein_distance)
     if (options.startsWith !== undefined) checks.push(line => line.startsWith(term))
     if (options.customCompare !== undefined) checks.push(line => options.customCompare(line))
 
+    //Check limit search on starting char
     if (options.firstCharExactMatch || options.exact || options.levenshtein_distance === 0 || options.startsWith !== undefined) lineoptions.char = term.charAt(0)
 
     return getTextLines(lineoptions, (line, linePos) => {
@@ -291,14 +297,12 @@ function search(request){
 function searchUnrolled(request){
     if (request.OR) {
         return Promise.all(request.OR.map(req => searchUnrolled(req)))
-        .then(results => {
-            return [results].reduce((p, c) => Object.assign(p, c));
-        })
+        .then(results => results.reduce((p, c) => Object.assign(p, c)))
     }else if(request.AND){
         return Promise.all(request.AND.map(req => searchUnrolled(req)))
-        .then(res => [results]
+        .then(results => results
             .reduce((p, c) => intersection(p, c)
-            .map(commonKey => ((p.commonKey.score > c.commonKey.score) ? p.commonKey : c.commonKey))))
+            .map(commonKey => ((p[commonKey].score > c[commonKey].score) ? p[commonKey] : c[commonKey]))))
     }else{
         return searchRaw(request)
     }
