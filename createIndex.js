@@ -183,7 +183,7 @@ function createFulltextIndex(data, path, options){
         }
         // writeFileSync(path, new Buffer(JSON.stringify(allTerms)))
         writeFileSync(origPath, allTerms.join('\n'))
-
+        writeFileSync(origPath+'.length', new Buffer(new Uint32Array(allTerms.map(term => term.length)).buffer))
         creatCharOffsets(origPath, resolve)
     })
     .catch(err => {

@@ -199,32 +199,25 @@ function addTokenResults(hits, path, term){
     let hasTokens = fs.existsSync(path+'.tokens.tokenValIds')
     if (!hasTokens) return Promise.resolve(hits)
 
+    var hrstart = process.hrtime();
     let tokenKVData = new TokensIndexKeyValueStore(path)
-    let tokenParentids = []
+    let valueLengths = getIndex(path+'.length')
 
     for (let valueId in hits) {
         let parentIdsForToken = tokenKVData.getParentValIds(parseInt(valueId))
         if(parentIdsForToken.length > 0){
-            delete hits[valueId]
-            tokenParentids = tokenParentids.concat(parentIdsForToken)
+            let tokenScore = hits[valueId].score
+            parentIdsForToken.forEach(tokenParentvalId => {
+                let parentTextLength = valueLengths[tokenParentvalId]
+                let tokenTextLength = valueLengths[valueId]
+                let adjustedScore = tokenScore * tokenTextLength / parentTextLength
+                if(hits[tokenParentvalId]) hits[tokenParentvalId].score += adjustedScore
+                else hits[tokenParentvalId] = {score:adjustedScore}
+            })
         }
     }
-
-    var hrstart = process.hrtime();
-
-    return Promise.all(tokenParentids.map(tokenParentvalId => {
-        return tokenKVData.getTextForValueId(tokenParentvalId)
-        .then(parentString => {
-            let score = getDefaultScore(parentString, term)
-            if(hits[tokenParentvalId]) hits[tokenParentvalId].score += score
-            else hits[tokenParentvalId] = {score:score}
-        })
-    }))
-    .then(() => {
-        console.info("addTokenResultsTime: %dms",  process.hrtime(hrstart)[1]/1000000);
-        return hits
-    })
-
+    console.info("addTokenResultsTime: %dms",  process.hrtime(hrstart)[1]/1000000);
+    return hits
 }
 
 
@@ -321,26 +314,6 @@ function searchRaw(request){
     let term = request.search.term.toLowerCase()
     let options = request.search
 
-    // let request = {
-    //     OR: [
-    //         {
-    //             search: {
-    //                 term:'maje',
-    //                 path:'meanings.ger[]',
-    //                 levenshtein_distance:1
-    //             }
-    //         },
-    //         {
-    //             search: {
-    //                 term:'maje',
-    //                 path:'meanings.eng[]',
-    //                 levenshtein_distance:1
-    //             }
-    //         },
-
-    //     ]
-    // }
-
     //     let request = {
     //     search: {
     //         term:'我慢汁',
@@ -353,8 +326,6 @@ function searchRaw(request){
     //     }
     // }
 
-    // let origPath = path
-    // path = removeArrayMarker(path)
     // console.time('SearchTime Netto')
     var hrstart = process.hrtime();
 
@@ -364,7 +335,6 @@ function searchRaw(request){
 
         // console.log("hits")
         // console.log(hits)
-
         let nextLevelHits = {}
 
         let paths = util.getStepsToAnchor(path)
