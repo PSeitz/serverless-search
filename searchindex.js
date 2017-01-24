@@ -210,6 +210,8 @@ function addTokenResults(hits, path, term){
         }
     }
 
+    var hrstart = process.hrtime();
+
     return Promise.all(tokenParentids.map(tokenParentvalId => {
         return tokenKVData.getTextForValueId(tokenParentvalId)
         .then(parentString => {
@@ -218,7 +220,10 @@ function addTokenResults(hits, path, term){
             else hits[tokenParentvalId] = {score:score}
         })
     }))
-    .then(() => hits)
+    .then(() => {
+        console.info("addTokenResultsTime: %dms",  process.hrtime(hrstart)[1]/1000000);
+        return hits
+    })
 
 }
 
@@ -241,6 +246,7 @@ function getHitsInField(path, options, term){
     //Check limit search on starting char
     if (options.firstCharExactMatch || options.exact || options.levenshtein_distance === 0 || options.startsWith !== undefined) lineoptions.char = term.charAt(0)
 
+    var hrstart = process.hrtime();
     return getTextLines(lineoptions, (line, linePos) => {
         // console.log("Check: "+line + " linePos:"+linePos)
         if (checks.every(check => check(line))){
@@ -253,6 +259,7 @@ function getHitsInField(path, options, term){
             if (options.includeValue) hits[linePos].value = line
         }
     }).then(() => {
+        console.info("getHitsInFieldTime: %dms",  process.hrtime(hrstart)[1]/1000000);
         return hits
     })
 }
@@ -348,14 +355,15 @@ function searchRaw(request){
 
     // let origPath = path
     // path = removeArrayMarker(path)
-    console.time('SearchTime Netto')
+    // console.time('SearchTime Netto')
+    var hrstart = process.hrtime();
 
     return getHitsInField(path, options, term)
     .then(res => addTokenResults(res, path, term))
     .then(hits => {
 
-        console.log("hits")
-        console.log(hits)
+        // console.log("hits")
+        // console.log(hits)
 
         let nextLevelHits = {}
 
@@ -383,12 +391,15 @@ function searchRaw(request){
             nextLevelHits = {}
         }
 
+        // console.timeEnd('SearchTime Netto')
+        console.info("SearchTime Netto: %dms",  process.hrtime(hrstart)[1]/1000000);
+
         return hits
 
         // let mainWithScore = sortByScore(hitsToArray(hits))
 
         // console.log(mainWithScore)
-        // console.timeEnd('SearchTime Netto')
+        
         // return mainWithScore
     })
 
