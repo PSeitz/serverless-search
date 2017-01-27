@@ -225,16 +225,21 @@ function addTokenResults(hits, path, term){
 function getHitsInField(path, options, term){
     let hits = {} // id:score
     let lineoptions = {path:path}
-    let checks = []
+
+    options.checks = options.checks || []
+
+    if (options.operator && ['every', 'some'].indexOf(options.operator) === -1) throw new Error('options.operator must be "some" or "every"')
+
+    let checksmethod = options.checks[options.operator || 'every'].bind(options.checks) // ''every' or 'some'
 
     //exact when nothing else set
     if (options.exact === undefined && options.levenshtein_distance === undefined && options.startsWith === undefined && options.customCompare === undefined)
         options.exact = true
 
-    if (options.exact !== undefined) checks.push(line => line == term)
-    if (options.levenshtein_distance !== undefined) checks.push(line => levenshtein.get(line, term) <= options.levenshtein_distance)
-    if (options.startsWith !== undefined) checks.push(line => line.startsWith(term))
-    if (options.customCompare !== undefined) checks.push(line => options.customCompare(line))
+    if (options.exact !== undefined) options.checks.push(line => line == term)
+    if (options.levenshtein_distance !== undefined) options.checks.push(line => levenshtein.get(line, term) <= options.levenshtein_distance)
+    if (options.startsWith !== undefined) options.checks.push(line => line.startsWith(term))
+    if (options.customCompare !== undefined) options.checks.push(line => options.customCompare(line))
 
     //Check limit search on starting char
     if (options.firstCharExactMatch || options.exact || options.levenshtein_distance === 0 || options.startsWith !== undefined) lineoptions.char = term.charAt(0)
@@ -242,7 +247,7 @@ function getHitsInField(path, options, term){
     var hrstart = process.hrtime();
     return getTextLines(lineoptions, (line, linePos) => {
         // console.log("Check: "+line + " linePos:"+linePos)
-        if (checks.every(check => check(line))){
+        if (checksmethod(check => check(line))){
             console.log("Hit: "+line + " linePos:"+linePos)
 
             let score = options.customScore ? options.customScore(line, term) : getDefaultScore(line, term)
@@ -365,12 +370,6 @@ function searchRaw(request){
         console.info("SearchTime Netto: %dms",  process.hrtime(hrstart)[1]/1000000);
 
         return hits
-
-        // let mainWithScore = sortByScore(hitsToArray(hits))
-
-        // console.log(mainWithScore)
-        
-        // return mainWithScore
     })
 
 
