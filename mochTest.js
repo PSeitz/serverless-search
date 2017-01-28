@@ -60,7 +60,7 @@ let data = [
             }
         ],
         "meanings": { // meanings id 1
-            "eng" : ["will", "desire", "urge"],
+            "eng" : ["will", "desire", "urge", "having a long torso"],
             "ger": ["Wollen (n)", "Wille (m)", "Begeisterung (f)"] // meanings.ger id .. 5, 6 7 
         },
         "ent_seq": "1587690"
@@ -230,7 +230,23 @@ describe('Serverless DB', function() {
         .should.eventually.have.length(5)
     })
 
-    
+    it('should or connect the checks ', function() {
+        return searchDb.searchDb('mochaTest', {
+            search: {
+                term:'having a long',
+                path:'meanings.eng[]',
+                levenshtein_distance:1,
+                firstCharExactMatch:true,
+                startsWith:true,
+                operator:'some'
+            }
+        }).then(res => {
+            console.log(JSON.stringify(res, null, 2))
+            return res
+        })
+        .should.eventually.have.length(1)
+    })
+
     // it('should search', function() {
     //     let mainids = Array.from(require('./loadUint32')('./meanings.ger.mainids'))
     //     console.log(mainids)

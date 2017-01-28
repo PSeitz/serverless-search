@@ -51,7 +51,7 @@ function lowerBoundSearch(arr, find) {
 
 
 function getIndex(path){
-    return require('./loadUint32')(path)
+    return require('./loadUInt32')(path)
 }
 
 class CharOffset{
