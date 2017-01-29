@@ -248,7 +248,7 @@ function getHitsInField(path, options, term){
     return getTextLines(lineoptions, (line, linePos) => {
         // console.log("Check: "+line + " linePos:"+linePos)
         if (checksmethod(check => check(line))){
-            console.log("Hit: "+line + " linePos:"+linePos)
+            // console.log("Hit: "+line + " linePos:"+linePos)
 
             let score = options.customScore ? options.customScore(line, term) : getDefaultScore(line, term)
             if(hits[linePos]) hits[linePos].score += score
