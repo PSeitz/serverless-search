@@ -190,7 +190,7 @@ function addBoost(request, hits){
         let score = request.boost.fun(boostkvStore.getValue(valueId) + (request.boost.param || 0) )
         // console.log("THE SCORE")
         // console.log(score)
-        hits[valueId] += score
+        hits[valueId].score += score
     }
 }
 
@@ -351,6 +351,7 @@ function searchRaw(request){
 
             if (request.boost && request.boost.path && request.boost.path.indexOf(pathName) >= 0) { // TODO move towards path
                 addBoost(request, hits)
+                delete request.boost
             }
 
             let kvStore = new IndexKeyValueStore(pathName+'.valueIdToParent.valIds', pathName+'.valueIdToParent.mainIds')                
@@ -364,6 +365,11 @@ function searchRaw(request){
             }
             hits = nextLevelHits
             nextLevelHits = {}
+        }
+
+        if (request.boost && request.boost.path) { // TODO move towards path
+            addBoost(request, hits)
+            delete request.boost
         }
 
         // console.timeEnd('SearchTime Netto')

@@ -233,15 +233,15 @@ function createBoostIndex(data, path, options, cb){
     // if (level !== 0) throw new Error("Only level 0 boosts supported")
 
     let tuples = []
-    forEachElementInPath(data, path, (value, mainId, subObjId) => {
+    let level = util.getLevel(path)
+    forEachElementInPath(data, path,function (value, mainId, subObjId)  {
         if (options.type == 'int') {
-            tuples.push([subObjId, value])
+            tuples.push([arguments[level + 1], value])
             // tuples.push([mainId, value])
         }else{
             throw new Error('only type int supported for boost')
         }
     })
-
     tuples.sort(sortFirstColumn)
 
     writeFileSync(path+'.boost.subObjId', new Buffer(new Uint32Array(tuples.map(tuple => tuple[0])).buffer))

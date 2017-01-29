@@ -30,6 +30,7 @@ let database = require('./database')
 
 let data = [
     {                                           // anchor id 0
+        "commonness": 20,
         "kanji": [
             { "text": "偉容", "commonness": 0}, // kanji id 0
             { "text": "威容","commonness": 5}   // kanji id 1
@@ -48,6 +49,7 @@ let data = [
         "ent_seq": "1587680"
     },
     {                                           // anchor id 1
+        "commonness": 20,
         "kanji": [
             { "text": "意欲", "commonness": 40}, // kanji id 2
             { "text": "意慾", "commonness": 0}   // kanji id 3
@@ -65,7 +67,8 @@ let data = [
         },
         "ent_seq": "1587690"
     },
-    {                                           // anchor id 2
+    {          
+        "commonness": 500,                                 // anchor id 2
         "kanji": [
             { "text": "意慾", "commonness": 20}   // kanji id 4
         ],
@@ -91,6 +94,7 @@ describe('Serverless DB', function() {
     this.timeout(20000)
     before(function(done) {
         database.createDatabase(data, dbfolder, [
+            { boost:'commonness' , options:{type:'int'}}, 
             { fulltext:'ent_seq' },
             // { fulltext:'kanji[].text' }, 
             // { fulltext:'kana[].romaji' }, 
@@ -220,7 +224,31 @@ describe('Serverless DB', function() {
     })
 
 
-    it('should search and boost', function() {
+    it('should search and boost anchor', function() {
+        console.log("test search123123123")
+        console.log(process.cwd())
+        return searchDb.searchDb('mochaTest', {
+            search: {
+                term:'意慾',
+                path:'kanji[].text',
+                levenshtein_distance:0,
+                firstCharExactMatch:true
+            },
+            boost: {
+                path:'commonness',
+                fun:Math.log,
+                param: 1
+            }
+        }).then(res => {
+            // console.log(JSON.stringify(res, null, 2))
+            return res
+        })
+        .should.eventually.have.deep.property('[0].commonness', 500);
+        // .should.eventually.have.length(2)
+    })
+
+
+    it('should suggest', function() {
         console.log("test search123123123")
         console.log(process.cwd())
         return searchindex.suggest('meanings.ger[]', 'majes').then(res => {
@@ -241,7 +269,7 @@ describe('Serverless DB', function() {
                 operator:'some'
             }
         }).then(res => {
-            console.log(JSON.stringify(res, null, 2))
+            // console.log(JSON.stringify(res, null, 2))
             return res
         })
         .should.eventually.have.length(1)
