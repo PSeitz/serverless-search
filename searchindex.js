@@ -294,9 +294,13 @@ function intersection(o1, o2) {
 }
 
 function search(request){
+    request.skip = request.skip || 0
+    request.top = request.top || 10
+
     return searchUnrolled(request)
         .then(hitsToArray)
         .then(sortByScore)
+        .then(res => res.slice(request.skip, request.top))
 }
 
 function searchUnrolled(request){
