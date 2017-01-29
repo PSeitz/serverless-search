@@ -359,7 +359,7 @@ function searchRaw(request){
                 let score = hits[valueId].score
                 let values = kvStore.getValues(parseInt(valueId, 10))
                 values.forEach(parentValId => {
-                    if(nextLevelHits[parentValId]) nextLevelHits[parentValId].score += score
+                    if(nextLevelHits[parentValId]) nextLevelHits[parentValId].score = Math.max(score, nextLevelHits[parentValId].score) + 0.1
                     else nextLevelHits[parentValId] = {score:score}
                 })
             }
