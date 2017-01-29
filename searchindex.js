@@ -61,15 +61,18 @@ class CharOffset{
         this.lineOffsets = getIndex(path+'.charOffsets.lineOffset')
     }
     getClosestOffset(linePos){
-        let pos = lowerBoundSearch(this.lineOffsets, linePos)
-        return this.getOffsetInfo(pos)
+        let index = lowerBoundSearch(this.lineOffsets, linePos)
+        return this.getOffsetInfo(index)
     }
     getCharOffsetInfo(char){
-        return this.getOffsetInfo(binarySearch(this.chars, char) )
+        let charIndex = binarySearch(this.chars, char)
+        let nextCharIndex = charIndex + 1
+        while(this.chars[nextCharIndex].length == 2)nextCharIndex++
+        return this.getOffsetInfo(charIndex, nextCharIndex)
     }
-    getOffsetInfo(pos){
-        let byteRange = {start: this.byteOffsets[pos], end:this.byteOffsets[pos+1]-1} // -1 For the linebreak
-        return {byteRange: byteRange, lineOffset: this.lineOffsets[pos]}
+    getOffsetInfo(index, endIndex){
+        let byteRange = {start: this.byteOffsets[index], end:this.byteOffsets[endIndex]-1} // -1 For the linebreak
+        return {byteRange: byteRange, lineOffset: this.lineOffsets[index]}
     }
 }
 

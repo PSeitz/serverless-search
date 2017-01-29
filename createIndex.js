@@ -198,26 +198,32 @@ function creatCharOffsets(path, resolve){
     let stream = fs.createReadStream(path)
     const rl = readline.createInterface({ input: stream })
 
-    let offsetsOnly = [], charsOnly = [], lineOffset = []
+    let offsets = []
 
-    let byteOffset = 0, lineNum = 0, currentChar
+
+    let byteOffset = 0, lineNum = 0, currentChar, currentTwoChar
     rl.on('line', (line, param2) => {
         let firstCharOfLine = line.charAt(0)
+        let firstTwoCharOfLine = line.charAt(0) + line.charAt(1)
         if(currentChar != firstCharOfLine){
             currentChar = firstCharOfLine
-            charsOnly.push(currentChar)
-            offsetsOnly.push(byteOffset)
-            lineOffset.push(lineNum)
+            offsets.push({char: currentChar, byteOffset:byteOffset, lineOffset:lineNum})
             console.log(`${currentChar} ${byteOffset} ${lineNum}`)
+        }
+        if(currentTwoChar != firstTwoCharOfLine){
+            currentTwoChar = firstTwoCharOfLine
+            offsets.push({char: currentTwoChar, byteOffset:byteOffset, lineOffset:lineNum})
+            console.log(`${currentTwoChar} ${byteOffset} ${lineNum}`)
         }
         byteOffset+= Buffer.byteLength(line, 'utf8') + 1 // linebreak = 1
         lineNum++
     }).on('close', () => {
+        let offsetsOnly = offsets.map(offset=>offset.byteOffset)
         offsetsOnly.push(byteOffset)
         console.log(offsetsOnly)
-        writeFileSync(path+'.charOffsets.chars', JSON.stringify(charsOnly))
+        writeFileSync(path+'.charOffsets.chars', JSON.stringify(offsets.map(offset=>offset.char)))
         writeFileSync(path+'.charOffsets.byteOffsets',  new Buffer(new Uint32Array(offsetsOnly).buffer))
-        writeFileSync(path+'.charOffsets.lineOffset',  new Buffer(new Uint32Array(lineOffset).buffer))
+        writeFileSync(path+'.charOffsets.lineOffset',  new Buffer(new Uint32Array(offsets.map(offset=>offset.lineOffset)).buffer))
         resolve()
     })
 }
