@@ -200,29 +200,33 @@ function creatCharOffsets(path, resolve){
 
     let offsets = []
 
-
+    let currentSingleChar, currentSecondChar
     let byteOffset = 0, lineNum = 0, currentChar, currentTwoChar
     rl.on('line', (line, param2) => {
         let firstCharOfLine = line.charAt(0)
         let firstTwoCharOfLine = line.charAt(0) + line.charAt(1)
         if(currentChar != firstCharOfLine){
             currentChar = firstCharOfLine
-            offsets.push({char: currentChar, byteOffset:byteOffset, lineOffset:lineNum})
+            if(currentSingleChar) currentSingleChar.byteOffsetEnd = byteOffset
+            currentSingleChar = {char: currentChar, byteOffsetStart:byteOffset, lineOffset:lineNum}
+            offsets.push(currentSingleChar)
             console.log(`${currentChar} ${byteOffset} ${lineNum}`)
         }
         if(currentTwoChar != firstTwoCharOfLine){
             currentTwoChar = firstTwoCharOfLine
-            offsets.push({char: currentTwoChar, byteOffset:byteOffset, lineOffset:lineNum})
+            if(currentSecondChar) currentSecondChar.byteOffsetEnd = byteOffset
+            currentSecondChar = {char: currentTwoChar, byteOffsetStart:byteOffset, lineOffset:lineNum}
+            offsets.push(currentSecondChar)
             console.log(`${currentTwoChar} ${byteOffset} ${lineNum}`)
         }
         byteOffset+= Buffer.byteLength(line, 'utf8') + 1 // linebreak = 1
         lineNum++
     }).on('close', () => {
-        let offsetsOnly = offsets.map(offset=>offset.byteOffset)
-        offsetsOnly.push(byteOffset)
-        console.log(offsetsOnly)
+        currentSingleChar.byteOffsetEnd = byteOffset
+        currentSecondChar.byteOffsetEnd = byteOffset
         writeFileSync(path+'.charOffsets.chars', JSON.stringify(offsets.map(offset=>offset.char)))
-        writeFileSync(path+'.charOffsets.byteOffsets',  new Buffer(new Uint32Array(offsetsOnly).buffer))
+        writeFileSync(path+'.charOffsets.byteOffsetsStart',     new Buffer(new Uint32Array(offsets.map(offset=>offset.byteOffsetStart)).buffer))
+        writeFileSync(path+'.charOffsets.byteOffsetsEnd',  new Buffer(new Uint32Array(offsets.map(offset=>offset.byteOffsetEnd)).buffer))
         writeFileSync(path+'.charOffsets.lineOffset',  new Buffer(new Uint32Array(offsets.map(offset=>offset.lineOffset)).buffer))
         resolve()
     })
