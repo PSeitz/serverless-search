@@ -57,19 +57,21 @@ function getIndex(path){
 class CharOffset{
     constructor(path){
         this.chars = JSON.parse(fs.readFileSync(path+'.charOffsets.chars'))
-        this.byteOffsets = getIndex(path+'.charOffsets.byteOffsets')
+        this.byteOffsetsStart = getIndex(path+'.charOffsets.byteOffsetsStart')
+        this.byteOffsetsEnd = getIndex(path+'.charOffsets.byteOffsetsEnd')
         this.lineOffsets = getIndex(path+'.charOffsets.lineOffset')
     }
     getClosestOffset(linePos){
-        let pos = lowerBoundSearch(this.lineOffsets, linePos)
-        return this.getOffsetInfo(pos)
+        let index = lowerBoundSearch(this.lineOffsets, linePos)
+        return this.getOffsetInfo(index)
     }
     getCharOffsetInfo(char){
-        return this.getOffsetInfo(binarySearch(this.chars, char) )
+        let charIndex = binarySearch(this.chars, char)
+        return this.getOffsetInfo(charIndex)
     }
-    getOffsetInfo(pos){
-        let byteRange = {start: this.byteOffsets[pos], end:this.byteOffsets[pos+1]-1} // -1 For the linebreak
-        return {byteRange: byteRange, lineOffset: this.lineOffsets[pos]}
+    getOffsetInfo(index){
+        let byteRange = {start: this.byteOffsetsStart[index], end:this.byteOffsetsEnd[index]-1} // -1 For the linebreak
+        return {byteRange: byteRange, lineOffset: this.lineOffsets[index]}
     }
 }
 
@@ -151,7 +153,7 @@ function getTextLines(options, onLine){ //options: path, char
     let charOffset = {lineOffset:0}
     if(options.char){
         charOffset = getCreateCharOffsets(options.path).getCharOffsetInfo(options.char)
-        console.log("START at Line: " + charOffset.lineOffset)
+        console.log(options.char + " START at Line: " + charOffset.lineOffset)
     }
     if (options.linePos) {
         charOffset = getCreateCharOffsets(options.path).getClosestOffset(options.linePos)
@@ -242,7 +244,10 @@ function getHitsInField(path, options, term){
     if (options.customCompare !== undefined) options.checks.push(line => options.customCompare(line))
 
     //Check limit search on starting char
-    if (options.firstCharExactMatch || options.exact || options.levenshtein_distance === 0 || options.startsWith !== undefined) lineoptions.char = term.charAt(0)
+    if (options.firstCharExactMatch)  lineoptions.char = term.charAt(0)
+
+    if (options.exact || options.levenshtein_distance === 0 || options.startsWith !== undefined)
+        lineoptions.char = term.charAt(0) + term.charAt(1)
 
     var hrstart = process.hrtime();
     return getTextLines(lineoptions, (line, linePos) => {
