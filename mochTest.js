@@ -82,7 +82,56 @@ let data = [
             "ger": ["der test"] // meanings.ger id ..
         },
         "ent_seq": "1587700"
-    }]
+    },
+    {                                          
+        "commonness": 551,                       
+        "kanji": [                               
+            {                                      
+                "text": "何の",                        
+                "commonness": 526                    
+            }                                      
+        ],                                       
+        "kana": [                                
+            {                                      
+                "text": "どの",                        
+                "romaji": "Dono",                    
+                "commonness": 25                     
+            }                                      
+        ],                                       
+        "meanings": {                            
+            "ger": [                               
+                "welch"                           
+            ]                                      
+        },                                       
+        "ent_seq": "1920240"                     
+    },
+    {                           
+        "pos": [                  
+            "adj-i"                 
+        ],                        
+        "commonness": 1,        
+        "misc": [],               
+        "kanji": [                
+            {                       
+                "text": "柔らかい",       
+                "commonness": 57      
+            }                  
+        ],                        
+        "kana": [                 
+            {                       
+                "text": "やわらかい",      
+                "romaji": "Yawarakai",
+                "commonness": 30      
+            }                       
+        ],                        
+        "meanings": {             
+            "ger": [                
+                "(1) weich",          
+            ]                       
+        },                        
+        "ent_seq": "1605630"      
+    }                                                                 
+]
 
 
 let searchDb = require('./searchDb')
@@ -193,7 +242,7 @@ describe('Serverless DB', function() {
 
     it('should extract corect texts', function() {
         let allValues = fs.readFileSync('./meanings.ger[]', 'utf-8').split('\n')
-        expect(allValues).to.eql(['anblick','aussehen','begeisterung','der', 'der test','majestät','majestätischer','majestätischer anblick','majestätisches','majestätisches aussehen','test','wille','wollen'])
+        expect(allValues).to.eql(['anblick','aussehen','begeisterung','der', 'der test','majestät','majestätischer','majestätischer anblick','majestätisches','majestätisches aussehen','test', 'weich', 'welch','wille','wollen'])
     })
 
     it('should detect the path to anchor', function() {
@@ -243,7 +292,7 @@ describe('Serverless DB', function() {
             // console.log(JSON.stringify(res, null, 2))
             return res
         })
-        .should.eventually.have.deep.property('[0].commonness', 500);
+        .should.eventually.have.deep.property('[0].commonness', 500)
         // .should.eventually.have.length(2)
     })
 
@@ -273,6 +322,28 @@ describe('Serverless DB', function() {
             return res
         })
         .should.eventually.have.length(1)
+    })
+
+    it('should rank exact matches pretty good', function() {
+        console.log("test search123123123")
+        console.log(process.cwd())
+        return searchDb.searchDb('mochaTest', {
+            search: {
+                term:'weich',
+                path:'meanings.ger[]',
+                levenshtein_distance:1,
+                firstCharExactMatch:true
+            },
+            boost: {
+                path:'commonness',
+                fun:Math.log,
+                param: 1
+            }
+        }).then(res => {
+            // console.log(JSON.stringify(res, null, 2))
+            return res
+        })
+        .should.eventually.have.deep.property('[0].meanings.ger[0]', '(1) weich')
     })
 
     // it('should search', function() {

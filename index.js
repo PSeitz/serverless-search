@@ -2,12 +2,12 @@
 
 let service = {}
 
-service.database = () => require("./database");
+service.database = () => require("./database")
 
-service.searchdb = () => require("./searchdb");
+service.searchdb = () => require("./searchdb")
 
-service.jsonfilter = () => require("./jsonfilter");
+service.jsonfilter = () => require("./jsonfilter")
 
-service.searchindex = () => require("./searchindex");
+service.searchindex = () => require("./searchindex")
 
-module.exports = service;
+module.exports = service

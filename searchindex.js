@@ -102,19 +102,12 @@ class TokensIndexKeyValueStore{
     }
     get keys() { return this.store.keys }
     get parentValIds(){ return this.store.values }
-    // get subObjIds(){ return this.store.values2 }
     getParentValId(key){
         return this.store.getValue(key)
     }
     getParentValIds(key){
         return this.store.getValues(key)
     }
-    // getSubObjId(key){
-    //     return this.store.getValue2(key)
-    // }
-    // getTextForValueId(index){
-    //     return getLine(this.path, this.parentValIds[index])
-    // }
     getTextForValueId(index){
         return getLine(this.path, index)
     }
@@ -182,7 +175,7 @@ function getLine(path, linePos){ //options: path, char
 }
 
 function getDefaultScore(term1, term2){
-    return 2/(levenshtein.get(term1, term2) + 1 )
+    return 2/(levenshtein.get(term1, term2) + 0.2 )
 }
 
 function addBoost(request, hits){
@@ -201,7 +194,7 @@ function addTokenResults(hits, path, term){
     let hasTokens = fs.existsSync(path+'.tokens.tokenValIds')
     if (!hasTokens) return Promise.resolve(hits)
 
-    var hrstart = process.hrtime();
+    var hrstart = process.hrtime()
     let tokenKVData = new TokensIndexKeyValueStore(path)
     let valueLengths = getIndex(path+'.length')
 
@@ -218,7 +211,7 @@ function addTokenResults(hits, path, term){
             })
         }
     }
-    console.info("addTokenResultsTime: %dms",  process.hrtime(hrstart)[1]/1000000);
+    console.info("addTokenResultsTime: %dms",  process.hrtime(hrstart)[1]/1000000)
     return hits
 }
 
@@ -249,20 +242,20 @@ function getHitsInField(path, options, term){
     if (options.exact || options.levenshtein_distance === 0 || options.startsWith !== undefined)
         lineoptions.char = term.charAt(0) + term.charAt(1)
 
-    var hrstart = process.hrtime();
+    var hrstart = process.hrtime()
     return getTextLines(lineoptions, (line, linePos) => {
         // console.log("Check: "+line + " linePos:"+linePos)
         if (checksmethod(check => check(line))){
-            // console.log("Hit: "+line + " linePos:"+linePos)
-
+            
             let score = options.customScore ? options.customScore(line, term) : getDefaultScore(line, term)
             if(hits[linePos]) hits[linePos].score += score
             else hits[linePos] = {score:score}
 
+            // console.log("Hit: "+line + " linePos:"+linePos + " score:"+score)
             if (options.includeValue) hits[linePos].value = line
         }
     }).then(() => {
-        console.info("getHitsInFieldTime: %dms",  process.hrtime(hrstart)[1]/1000000);
+        console.info("getHitsInFieldTime: %dms",  process.hrtime(hrstart)[1]/1000000)
         return hits
     })
 }
@@ -292,10 +285,10 @@ function suggest(path, term){
 function intersection(o1, o2) {
     return Object.keys(o1).concat(Object.keys(o2)).sort().reduce(function (r, a, i, aa) {
         if (i && aa[i - 1] === a) {
-            r.push(a);
+            r.push(a)
         }
-        return r;
-    }, []);
+        return r
+    }, [])
 }
 
 function search(request){
@@ -341,7 +334,7 @@ function searchRaw(request){
     // }
 
     // console.time('SearchTime Netto')
-    var hrstart = process.hrtime();
+    var hrstart = process.hrtime()
 
     return getHitsInField(path, options, term)
     .then(res => addTokenResults(res, path, term))
@@ -381,8 +374,9 @@ function searchRaw(request){
             delete request.boost
         }
 
-        // console.timeEnd('SearchTime Netto')
-        console.info("SearchTime Netto: %dms",  process.hrtime(hrstart)[1]/1000000);
+        // console.log("hits")
+        // console.log(hits)
+        console.info("SearchTime Netto: %dms",  process.hrtime(hrstart)[1]/1000000)
 
         return hits
     })

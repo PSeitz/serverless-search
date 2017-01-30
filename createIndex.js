@@ -44,8 +44,8 @@ function getAllterms(data, path, options, existingTerms){
 // console.log(terms[1000]);
 
 function last(array) {
-  var length = array == null ? 0 : array.length;
-  return length ? array[length - 1] : undefined;
+    var length = array == null ? 0 : array.length
+    return length ? array[length - 1] : undefined
 }
 
 function forEachElementInPath(data, path, cb) {

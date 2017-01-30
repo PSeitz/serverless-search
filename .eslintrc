@@ -9,7 +9,6 @@ rules:
   linebreak-style:
     - error
     - unix
-    - windows
   no-unused-vars:
     - warn
   semi:
