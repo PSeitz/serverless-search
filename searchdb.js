@@ -1,5 +1,4 @@
 'use strict'
-console.time('thesearch')
 let randomaccess = require('diskbased_json_array')
 let searchindex = require('./searchindex')
 

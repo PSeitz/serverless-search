@@ -222,8 +222,8 @@ function creatCharOffsets(path, resolve){
         byteOffset+= Buffer.byteLength(line, 'utf8') + 1 // linebreak = 1
         lineNum++
     }).on('close', () => {
-        currentSingleChar.byteOffsetEnd = byteOffset
-        currentSecondChar.byteOffsetEnd = byteOffset
+        if(currentSingleChar) currentSingleChar.byteOffsetEnd = byteOffset
+        if(currentSecondChar) currentSecondChar.byteOffsetEnd = byteOffset
         writeFileSync(path+'.charOffsets.chars', JSON.stringify(offsets.map(offset=>offset.char)))
         writeFileSync(path+'.charOffsets.byteOffsetsStart',     new Buffer(new Uint32Array(offsets.map(offset=>offset.byteOffsetStart)).buffer))
         writeFileSync(path+'.charOffsets.byteOffsetsEnd',  new Buffer(new Uint32Array(offsets.map(offset=>offset.byteOffsetEnd)).buffer))
