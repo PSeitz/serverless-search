@@ -276,7 +276,7 @@ describe('Serverless DB', function() {
         .should.eventually.have.length(2)
     })
 
-    it.only('should search and double boost', function() {
+    it('should search and double boost', function() {
         console.log("test search123123123")
         console.log(process.cwd())
         return searchDb.searchDb('mochaTest', {
