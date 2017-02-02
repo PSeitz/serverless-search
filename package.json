@@ -1,6 +1,6 @@
 {
   "name": "serverless-search",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "a serverless json based search engine",
   "main": "index.js",
   "scripts": {
