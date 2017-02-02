@@ -113,28 +113,6 @@ class TokensIndexKeyValueStore{
     }
 }
 
-
-function removeArrayMarker(path){
-    return path.split('.')
-        .map(el => (el.endsWith('[]')? el.substr(0, el.length-2):el ))
-        .join('.')
-}
-
-function getAllParentValIds(valueIdHits, scoreHits, valIdsIndex){
-
-    let valueIdDocids = []
-    let valueIdDocidScores = []
-    valueIdHits.forEach((hit, index) => {
-        let rows = binarySearchAll(valIdsIndex, hit)
-        valueIdDocids = valueIdDocids.concat(rows)
-        valueIdDocidScores = valueIdDocidScores.concat(rows.map(() => scoreHits[index]))
-    }) // For each hit in the fulltextindex, find all rows in the materialized index
-    return {
-        valueIdDocids:valueIdDocids,
-        valueIdDocidScores: valueIdDocidScores
-    }
-}
-
 let charOffsetCache = {}
 
 function getCreateCharOffsets(path) {
@@ -178,11 +156,11 @@ function getDefaultScore(term1, term2){
     return 2/(levenshtein.get(term1, term2) + 0.2 )
 }
 
-function addBoost(request, hits){
-    let boostPath = request.boost.path
+function addBoost(boost, hits){
+    let boostPath = boost.path
     let boostkvStore = new IndexKeyValueStore(boostPath+'.boost.subObjId', boostPath+'.boost.value')
     for (let valueId in hits) {
-        let score = request.boost.fun(boostkvStore.getValue(valueId) + (request.boost.param || 0) )
+        let score = boost.fun(boostkvStore.getValue(valueId) + (boost.param || 0) )
         // console.log("THE SCORE")
         // console.log(score)
         hits[valueId].score += score
@@ -321,6 +299,8 @@ function searchRaw(request){
     let term = request.search.term.toLowerCase()
     let options = request.search
 
+    if (request.boost && !Array.isArray(request.boost)) request.boost = [request.boost]
+
     //     let request = {
     //     search: {
     //         term:'我慢汁',
@@ -335,6 +315,16 @@ function searchRaw(request){
 
     // console.time('SearchTime Netto')
     var hrstart = process.hrtime()
+
+    let boostHits = (boost, pathName) => boost.path && boost.path.indexOf(pathName) >= 0
+
+    let checkApplyBoost = function(boost, pathName, hits){
+        if (boostHits(boost, pathName)) { // TODO move towards path
+            addBoost(boost, hits)
+            return true
+        }
+        return  false
+    }    
 
     return getHitsInField(path, options, term)
     .then(res => addTokenResults(res, path, term))
@@ -351,9 +341,8 @@ function searchRaw(request){
             let isLast = i === (paths.length -1)
             let pathName = util.getPathName(path, isLast) // last path is for the textindex
 
-            if (request.boost && request.boost.path && request.boost.path.indexOf(pathName) >= 0) { // TODO move towards path
-                addBoost(request, hits)
-                delete request.boost
+            if (request.boost) { // TODO move towards path
+                request.boost = request.boost.filter(boost => !checkApplyBoost(boost, pathName, hits))
             }
 
             let kvStore = new IndexKeyValueStore(pathName+'.valueIdToParent.valIds', pathName+'.valueIdToParent.mainIds')                
@@ -369,9 +358,12 @@ function searchRaw(request){
             nextLevelHits = {}
         }
 
-        if (request.boost && request.boost.path) { // TODO move towards path
-            addBoost(request, hits)
-            delete request.boost
+        // if (request.boost && request.boost.path ) { // TODO move towards path
+        //     addBoost(request, hits)
+        //     delete request.boost
+        // }
+        if (request.boost) { // TODO move towards path
+            request.boost = request.boost.filter(boost => !checkApplyBoost(boost, '', hits))
         }
 
         // console.log("hits")

@@ -72,6 +72,7 @@ let data = [
         "kanji": [
             { "text": "意慾", "commonness": 20}   // kanji id 4
         ],
+        "field1" : {text:"awesome", rank:1},
         "kana": [
             {
                 "text": "いよく",
@@ -90,7 +91,8 @@ let data = [
                 "text": "何の",                        
                 "commonness": 526                    
             }                                      
-        ],                                       
+        ],          
+        "field1" : {text:"awesome"},                             
         "kana": [                                
             {                                      
                 "text": "どの",                        
@@ -148,6 +150,8 @@ describe('Serverless DB', function() {
             // { fulltext:'kanji[].text' }, 
             // { fulltext:'kana[].romaji' }, 
             // { fulltext:'kana[].text' }, 
+            { boost:'field1.rank' , options:{type:'int'}}, 
+            { fulltext:'field1.text' }, 
             { fulltext:'kanji[].text' }, 
             { fulltext:'meanings.ger[]', options:{tokenize:true} },
             { fulltext:'meanings.eng[]', options:{tokenize:true} }, 
@@ -267,6 +271,34 @@ describe('Serverless DB', function() {
             }
         }).then(res => {
             // console.log(JSON.stringify(res, null, 2))
+            return res
+        })
+        .should.eventually.have.length(2)
+    })
+
+    it.only('should search and double boost', function() {
+        console.log("test search123123123")
+        console.log(process.cwd())
+        return searchDb.searchDb('mochaTest', {
+            search: {
+                term:'awesome',
+                path:'field1.text',
+                levenshtein_distance:0,
+                firstCharExactMatch:true
+            },
+            boost: [
+                {
+                    path:'commonness',
+                    fun:Math.log,
+                    param: 1
+                },
+                {
+                    path:'field1.rank',
+                    fun:rank => { if(!rank)return 0; return 10 / rank}
+                }
+            ]
+        }).then(res => {
+            console.log(JSON.stringify(res, null, 2))
             return res
         })
         .should.eventually.have.length(2)
