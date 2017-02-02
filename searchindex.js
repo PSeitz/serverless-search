@@ -317,7 +317,6 @@ function searchRaw(request){
     //     }
     // }
 
-    // console.time('SearchTime Netto')
     var hrstart = process.hrtime()
 
     let boostHits = (boost, pathName) => boost.path && boost.path.indexOf(pathName) >= 0
@@ -363,10 +362,6 @@ function searchRaw(request){
             nextLevelHits = {}
         }
 
-        // if (request.boost && request.boost.path ) { // TODO move towards path
-        //     addBoost(request, hits)
-        //     delete request.boost
-        // }
         if (request.boost) { // TODO move towards path
             request.boost = request.boost.filter(boost => !checkApplyBoost(boost, '', hits))
         }
@@ -374,7 +369,6 @@ function searchRaw(request){
         // console.log("hits")
         // console.log(hits)
         console.info("SearchTime Netto: %dms",  process.hrtime(hrstart)[1]/1000000)
-
         return hits
     })
 
