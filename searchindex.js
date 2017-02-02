@@ -161,15 +161,13 @@ function addBoost(boost, hits){
     let boostkvStore = new IndexKeyValueStore(boostPath+'.boost.subObjId', boostPath+'.boost.value')
     for (let valueId in hits) {
         let score = boost.fun(boostkvStore.getValue(valueId) + (boost.param || 0) )
-        // console.log("THE SCORE")
-        // console.log(score)
+        // console.log("THE SCORE: "+score)
+        // console.log(hits[valueId])
         if (score) hits[valueId].score += score
-        
     }
 }
 
-
-function addTokenResults(hits, path, term){
+function addTokenResults(hits, path){
     let hasTokens = fs.existsSync(path+'.tokens.tokenValIds')
     if (!hasTokens) return Promise.resolve(hits)
 
@@ -184,9 +182,14 @@ function addTokenResults(hits, path, term){
             parentIdsForToken.forEach(tokenParentvalId => {
                 let parentTextLength = valueLengths[tokenParentvalId]
                 let tokenTextLength = valueLengths[valueId]
-                let adjustedScore = tokenScore * tokenTextLength / parentTextLength
+                // let adjustedScore = tokenScore * tokenTextLength / parentTextLength
+                let adjustedScore = 2/(Math.abs(parentTextLength - tokenTextLength) + 0.2 )
+                if (adjustedScore < 0) throw new Error('asdf')
                 if(hits[tokenParentvalId]) hits[tokenParentvalId].score += adjustedScore
-                else hits[tokenParentvalId] = {score:adjustedScore}
+                else {
+                    hits[tokenParentvalId] = {score:adjustedScore}
+                    if(hits[valueId].value) hits[tokenParentvalId].value = hits[valueId].value
+                }
             })
         }
     }
@@ -321,6 +324,7 @@ function searchRaw(request){
 
     let checkApplyBoost = function(boost, pathName, hits){
         if (boostHits(boost, pathName)) { // TODO move towards path
+            console.log("Adding boost for: " +boost.path + " " +pathName)
             addBoost(boost, hits)
             return true
         }
@@ -328,7 +332,7 @@ function searchRaw(request){
     }    
 
     return getHitsInField(path, options, term)
-    .then(res => addTokenResults(res, path, term))
+    .then(res => addTokenResults(res, path))
     .then(hits => {
 
         // console.log("hits")

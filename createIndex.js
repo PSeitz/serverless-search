@@ -63,14 +63,15 @@ function forEachElementInPath(data, path, cb) {
                 }else{
                     comp = paths[++i] // move to next level
                     for(let subarrEl of currentEl){
-                        if (subarrEl[comp] === undefined) continue
-
-                        if (last(paths) == comp){
+                        // if (last(paths) == comp) 
+                        // if (subarrEl[comp] === undefined) continue
+                        if (last(paths) == comp && subarrEl[comp]){
                             cb(subarrEl[comp], mainId, valueId)
                         }else{
-                            throw new Error('level 3 not supported')
+                            // throw new Error('level 3 not supported')
                         }
                         valueId++
+                        
                     }
                 }
             }else{
@@ -194,7 +195,7 @@ function creatCharOffsets(path, resolve){
 
     let currentSingleChar, currentSecondChar
     let byteOffset = 0, lineNum = 0, currentChar, currentTwoChar
-    rl.on('line', (line, param2) => {
+    rl.on('line', (line) => {
         let firstCharOfLine = line.charAt(0)
         let firstTwoCharOfLine = line.charAt(0) + line.charAt(1)
         if(currentChar != firstCharOfLine){
@@ -226,7 +227,7 @@ function creatCharOffsets(path, resolve){
 
 
 
-function createBoostIndex(data, path, options, cb){
+function createBoostIndex(data, path, options){
     options = options || {}
     // let origPath = path
     // path = util.removeArrayMarker(path)

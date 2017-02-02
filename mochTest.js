@@ -72,7 +72,7 @@ let data = [
         "kanji": [
             { "text": "意慾", "commonness": 20}   // kanji id 4
         ],
-        "field1" : {text:"awesome", rank:1},
+        "field1" : [{text:"awesome", rank:1}],
         "kana": [
             {
                 "text": "いよく",
@@ -92,7 +92,7 @@ let data = [
                 "commonness": 526                    
             }                                      
         ],          
-        "field1" : {text:"awesome"},                             
+        "field1" : [{text:"awesome"}, {text:"nixhit"}],                             
         "kana": [                                
             {                                      
                 "text": "どの",                        
@@ -147,11 +147,10 @@ describe('Serverless DB', function() {
         database.createDatabase(data, dbfolder, [
             { boost:'commonness' , options:{type:'int'}}, 
             { fulltext:'ent_seq' },
-            // { fulltext:'kanji[].text' }, 
             // { fulltext:'kana[].romaji' }, 
             // { fulltext:'kana[].text' }, 
-            { boost:'field1.rank' , options:{type:'int'}}, 
-            { fulltext:'field1.text' }, 
+            { boost:'field1[].rank' , options:{type:'int'}}, 
+            { fulltext:'field1[].text' }, 
             { fulltext:'kanji[].text' }, 
             { fulltext:'meanings.ger[]', options:{tokenize:true} },
             { fulltext:'meanings.eng[]', options:{tokenize:true} }, 
@@ -166,7 +165,7 @@ describe('Serverless DB', function() {
     })
 
     it('should search tokenized and levensthein', function() {
-        return searchDb.searchDb('mochaTest', {search: {
+        return searchDb.searchDb(dbfolder, {search: {
             term:'majestätischer',
             path:'meanings.ger[]',
             levenshtein_distance:1,
@@ -179,7 +178,7 @@ describe('Serverless DB', function() {
     })
 
     it('should search without firstCharExactMatch', function() {
-        return searchDb.searchDb('mochaTest', {search: {
+        return searchDb.searchDb(dbfolder, {search: {
             term:'najestätischer',
             path:'meanings.ger[]',
             levenshtein_distance:1
@@ -191,7 +190,7 @@ describe('Serverless DB', function() {
     })
 
     it('should prefer exact matches to tokenmatches', function() {
-        return searchDb.searchDb('mochaTest', {search: {
+        return searchDb.searchDb(dbfolder, {search: {
             term:'will',
             path:'meanings.eng[]',
             levenshtein_distance:1
@@ -205,7 +204,7 @@ describe('Serverless DB', function() {
     it('should search word non tokenized', function() {
         console.log("test search123123123")
         console.log(process.cwd())
-        return searchDb.searchDb('mochaTest', {search: {
+        return searchDb.searchDb(dbfolder, {search: {
             term:'偉容',
             path:'kanji[].text',
             levenshtein_distance:0,
@@ -218,7 +217,7 @@ describe('Serverless DB', function() {
     })
 
     it('should search on non subobject', function() {
-        return searchDb.searchDb('mochaTest', {
+        return searchDb.searchDb(dbfolder, {
             search: {
                 term:'1587690',
                 path:'ent_seq',
@@ -233,7 +232,7 @@ describe('Serverless DB', function() {
     })
 
     it('AND connect hits', function() {
-        return searchDb.searchDb('mochaTest', {
+        return searchDb.searchDb(dbfolder, {
             AND: [{search: { term:'Majestät', path:'meanings.ger[]'}},
                 {search: { term:'majestic', path:'meanings.eng[]'}}]
         })
@@ -241,7 +240,7 @@ describe('Serverless DB', function() {
     })
 
     it('AND missing hits', function() {
-        return searchDb.searchDb('mochaTest', {
+        return searchDb.searchDb(dbfolder, {
             AND: [{search: { term:'Majestät', path:'meanings.ger[]'}},
                 {search: { term:'urge', path:'meanings.eng[]'}}]
         })
@@ -249,7 +248,7 @@ describe('Serverless DB', function() {
     })
 
     it('OR Connect hits', function() {
-        return searchDb.searchDb('mochaTest', {
+        return searchDb.searchDb(dbfolder, {
             OR: [{search: { term:'Majestät', path:'meanings.ger[]'}},
                 {search: { term:'urge', path:'meanings.eng[]'}}]
         })
@@ -269,7 +268,7 @@ describe('Serverless DB', function() {
     it('should search and boost', function() {
         console.log("test search123123123")
         console.log(process.cwd())
-        return searchDb.searchDb('mochaTest', {
+        return searchDb.searchDb(dbfolder, {
             search: {
                 term:'意慾',
                 path:'kanji[].text',
@@ -291,10 +290,10 @@ describe('Serverless DB', function() {
     it('should search and double boost', function() {
         console.log("test search123123123")
         console.log(process.cwd())
-        return searchDb.searchDb('mochaTest', {
+        return searchDb.searchDb(dbfolder, {
             search: {
                 term:'awesome',
-                path:'field1.text',
+                path:'field1[].text',
                 levenshtein_distance:0,
                 firstCharExactMatch:true
             },
@@ -305,8 +304,8 @@ describe('Serverless DB', function() {
                     param: 1
                 },
                 {
-                    path:'field1.rank',
-                    fun:rank => { if(!rank)return 0; return 10 / rank}
+                    path:'field1[].rank',
+                    fun:rank => { console.log("HAAA " +rank); if(!rank)return 0; return 10 / rank}
                 }
             ]
         }).then(res => {
@@ -320,7 +319,7 @@ describe('Serverless DB', function() {
     it('should search and boost anchor', function() {
         console.log("test search123123123")
         console.log(process.cwd())
-        return searchDb.searchDb('mochaTest', {
+        return searchDb.searchDb(dbfolder, {
             search: {
                 term:'意慾',
                 path:'kanji[].text',
@@ -352,7 +351,7 @@ describe('Serverless DB', function() {
     })
 
     it('should or connect the checks ', function() {
-        return searchDb.searchDb('mochaTest', {
+        return searchDb.searchDb(dbfolder, {
             search: {
                 term:'having a long',
                 path:'meanings.eng[]',
@@ -371,7 +370,7 @@ describe('Serverless DB', function() {
     it('should rank exact matches pretty good', function() {
         console.log("test search123123123")
         console.log(process.cwd())
-        return searchDb.searchDb('mochaTest', {
+        return searchDb.searchDb(dbfolder, {
             search: {
                 term:'weich',
                 path:'meanings.ger[]',
@@ -394,6 +393,66 @@ describe('Serverless DB', function() {
     //     let mainids = Array.from(require('./loadUint32')('./meanings.ger.mainids'))
     //     console.log(mainids)
     // })
+
+    after(function() {
+        // deleteFolderRecursive('mochaTest')
+    })
+
+})
+
+
+
+let data2 = [
+    {          
+        "field1" : [{text:"awesome", rank:123}],
+    },
+    {                                          
+        "commonness": 551,                       
+        "field1" : [{text:"awesome"}, 
+                    {text:"nixhit"}],                             
+        "ent_seq": "1920240"                     
+    },
+    {                                          
+        "commonness": 551,                       
+        "field1" : [{text:"awesome2"}, 
+                    {text:"weiter", rank:255}],                             
+        "ent_seq": "1920240"                     
+    }                                                               
+]
+
+
+describe('Boost Minimal Example', function() {
+    let dbfolder = 'mochaTest2'
+    this.timeout(20000)
+    before(function(done) {
+        database.createDatabase(data2, dbfolder, [
+            { boost:'field1[].rank' , options:{type:'int'}}, 
+            { fulltext:'field1[].text' }
+        ])
+        .then(() => { if (!process.cwd().endsWith(dbfolder))  process.chdir(process.cwd()+'/'+dbfolder); done() })
+    })
+
+    it('should boost', function() {
+        return searchDb.searchDb(dbfolder, {
+            search: {
+                term:'awesome',
+                path:'field1[].text',
+                levenshtein_distance:0,
+                firstCharExactMatch:true
+            },
+            boost: [
+                {
+                    path:'field1[].rank',
+                    fun:rank => { console.log("HAAA " +rank); if(!rank)return 0; return 10 / rank}
+                }
+            ]
+        }).then(res => {
+            console.log(JSON.stringify(res, null, 2))
+            return res
+        })
+        .should.eventually.have.length(2)
+    })
+
 
     after(function() {
         // deleteFolderRecursive('mochaTest')
