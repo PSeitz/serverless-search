@@ -20,7 +20,8 @@
             "args": ["mochTest.js", "--no-timeouts"],
             "cwd": "${workspaceRoot}",
             "runtimeExecutable": null,
-            "env": { "NODE_ENV": "testing"}
+            "env": { "NODE_ENV": "testing"},
+            "internalConsoleOptions": "openOnSessionStart"
         },
         {
             "type": "node",
