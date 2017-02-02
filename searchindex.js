@@ -163,7 +163,8 @@ function addBoost(boost, hits){
         let score = boost.fun(boostkvStore.getValue(valueId) + (boost.param || 0) )
         // console.log("THE SCORE")
         // console.log(score)
-        hits[valueId].score += score
+        if (score) hits[valueId].score += score
+        
     }
 }
 
@@ -296,7 +297,7 @@ function searchUnrolled(request){
 function searchRaw(request){
 
     let path = request.search.path
-    let term = request.search.term.toLowerCase()
+    let term = util.normalizeText(request.search.term)
     let options = request.search
 
     if (request.boost && !Array.isArray(request.boost)) request.boost = [request.boost]

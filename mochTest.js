@@ -43,7 +43,7 @@ let data = [
             }
         ],
         "meanings": {   // meanings id 0
-            "eng" : ["dignity", "majestic appearance", "will"],
+            "eng" : ["dignity", "majestic appearance", "will test"],
             "ger": ["majestätischer Anblick (m)", "majestätisches Aussehen (n)", "Majestät (f)"] // meanings.ger id 0, 1, 2 .. 
         },
         "ent_seq": "1587680"
@@ -188,6 +188,18 @@ describe('Serverless DB', function() {
             return res
         })
         .should.eventually.have.length(1)
+    })
+
+    it('should prefer exact matches to tokenmatches', function() {
+        return searchDb.searchDb('mochaTest', {search: {
+            term:'will',
+            path:'meanings.eng[]',
+            levenshtein_distance:1
+        }}).then(res => {
+            console.log(JSON.stringify(res, null, 2))
+            return res
+        })
+        .should.eventually.have.deep.property('[0].meanings.eng[0]', 'will')
     })
 
     it('should search word non tokenized', function() {

@@ -18,20 +18,12 @@ function getValueID(data, value){
     return binarySearch(data, value)
 }
 
-function normalizeText(text){
-    text = text.replace(/ *\([^)]*\) */g, ' ') // remove everything in braces
-    text = text.replace(/[{}'"]/g, '') // remove ' " {}
-    text = text.replace(/\s\s+/g, ' ') // replace tabs, newlines, double spaces with single spaces
-    text = text.toLowerCase()
-    return text.trim()
-}
-
 function getAllterms(data, path, options, existingTerms){
     options = options || {}
     let terms = existingTerms || {}
 
     forEachElementInPath(data, path, (value) => {
-        let normalizedText = normalizeText(value)
+        let normalizedText = util.normalizeText(value)
         terms[normalizedText] = true
         if (options.tokenize) 
             forEachToken(normalizedText, token =>  terms[token] = true)
@@ -155,7 +147,7 @@ function createFulltextIndex(data, path, options){
 
             forEachElementInPath(data, pathToAnchor, function (value, mainId, subObjId) {
                 if (isLast){
-                    let normalizedText = normalizeText(value)
+                    let normalizedText = util.normalizeText(value)
                     let valId = getValueID(allTerms, normalizedText)
 
                     // tuples.push((subObjId !== undefined) ? [valId, mainId, subObjId] : [valId, mainId])

@@ -9,6 +9,16 @@ function removeArrayMarker(path){
         .join('.')
 }
 
+function normalizeText(text){
+    text = text.replace(/ *\([^)]*\) */g, ' ') // remove everything in braces
+    text = text.replace(/[{}'"]/g, '') // remove ' " {}
+    text = text.replace(/\s\s+/g, ' ') // replace tabs, newlines, double spaces with single spaces
+    text = text.replace(/[,.]/g, '') // remove , .
+    text = text.replace(/[;・’-]/g, '') // remove ;・’-
+    text = text.toLowerCase()
+    return text.trim()
+}
+
 function getStepsToAnchor(path){
     let paths = []
     let current = []
@@ -30,6 +40,7 @@ function getPathName(pathToAnchor, isTextIndexPart){
     return pathToAnchor + (isTextIndexPart?'.textindex':'')
 }
 
+service.normalizeText = normalizeText
 service.removeArrayMarker = removeArrayMarker
 service.getStepsToAnchor = getStepsToAnchor
 service.getLevel = getLevel
