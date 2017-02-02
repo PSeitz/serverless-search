@@ -13,6 +13,10 @@ function searchDb(dbfolder, request){
     .then(mainWithScore => {
         let loader = new randomaccess.Loader('json_data')
         return loader.getDocs(mainWithScore.map(el => el.id))
+        .then(docs => {
+            docs.forEach((doc, index) => doc.score = mainWithScore[index].score)
+            return docs
+        })
     }).then(data => {
         process.chdir(parentDir)
         return data
