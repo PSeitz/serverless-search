@@ -130,14 +130,27 @@ function getTextLines(options, onLine){ //options: path, char
         charOffset = getCreateCharOffsets(options.path).getClosestOffset(options.linePos)
     }
     return new Promise(resolve => {
-        const readline = require('readline')
-        let stream = fs.createReadStream(options.path, charOffset.byteRange)
-        const rl = readline.createInterface({ input: stream})
-        rl.on('line', line => {
-            onLine(line, charOffset.lineOffset)
-            charOffset.lineOffset++
+        fs.open(options.path, 'r', function(err, fd) {
+            let bytesToRead = charOffset.byteRange.end - charOffset.byteRange.start
+            let buffer = Buffer.allocUnsafe(bytesToRead)
+            fs.read(fd, buffer, 0, bytesToRead, charOffset.byteRange.start, (err, bytesRead, buffer2) => {
+                let lines = buffer2.toString('utf8').split("\n")
+                lines.forEach(line => {
+                    onLine(line, charOffset.lineOffset)
+                    charOffset.lineOffset++
+                })
+                fs.close(fd)
+                resolve()
+            })
         })
-        rl.on('close', resolve)
+        // const readline = require('readline')
+        // let stream = fs.createReadStream(options.path, charOffset.byteRange)
+        // const rl = readline.createInterface({ input: stream})
+        // rl.on('line', line => {
+        //     onLine(line, charOffset.lineOffset)
+        //     charOffset.lineOffset++
+        // })
+        // rl.on('close', resolve)
     })
 }
 
