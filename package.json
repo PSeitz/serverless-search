@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/PSeitz/serverless-search#readme",
   "dependencies": {
-    "diskbased_json_array": "^1.0.4",
+    "diskbased_json_array": "^1.0.5",
     "fast-levenshtein": "^2.0.5",
     "mkdirp": "^0.5.1"
   },

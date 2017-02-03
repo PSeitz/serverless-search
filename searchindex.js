@@ -130,19 +130,26 @@ function getTextLines(options, onLine){ //options: path, char
         charOffset = getCreateCharOffsets(options.path).getClosestOffset(options.linePos)
     }
     return new Promise(resolve => {
-        fs.open(options.path, 'r', function(err, fd) {
-            let bytesToRead = charOffset.byteRange.end - charOffset.byteRange.start
-            let buffer = Buffer.allocUnsafe(bytesToRead)
-            fs.read(fd, buffer, 0, bytesToRead, charOffset.byteRange.start, (err, bytesRead, buffer2) => {
-                let lines = buffer2.toString('utf8').split("\n")
-                lines.forEach(line => {
-                    onLine(line, charOffset.lineOffset)
-                    charOffset.lineOffset++
+        function dataLoaded(data){
+            let lines = data.toString('utf8').split("\n")
+            for (var i = 0; i < lines.length; i++) {
+                onLine(lines[i], charOffset.lineOffset)
+                charOffset.lineOffset++
+            }
+        }
+        if (!charOffset.byteRange) {
+            fs.readFile(options.path, (err, data) => {dataLoaded(data); resolve()})
+        }else{
+            fs.open(options.path, 'r', function(err, fd) {
+                let bytesToRead = (charOffset.byteRange.end - charOffset.byteRange.start)
+                let buffer = Buffer.allocUnsafe(bytesToRead)
+                fs.read(fd, buffer, 0, bytesToRead, charOffset.byteRange.start, (err, bytesRead, buffer2) => {
+                    dataLoaded(buffer2)
+                    fs.close(fd)
+                    resolve()
                 })
-                fs.close(fd)
-                resolve()
             })
-        })
+        }
         // const readline = require('readline')
         // let stream = fs.createReadStream(options.path, charOffset.byteRange)
         // const rl = readline.createInterface({ input: stream})

@@ -11,7 +11,7 @@ function removeArrayMarker(path){
 
 function normalizeText(text){
     text = text.replace(/ *\([^)]*\) */g, ' ') // remove everything in braces
-    text = text.replace(/[{}'"]/g, '') // remove ' " {}
+    text = text.replace(/[{}'"“]/g, '') // remove ' " {}
     text = text.replace(/\s\s+/g, ' ') // replace tabs, newlines, double spaces with single spaces
     text = text.replace(/[,.]/g, '') // remove , .
     text = text.replace(/[;・’-]/g, '') // remove ;・’-
