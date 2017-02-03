@@ -142,7 +142,7 @@ function getTextLines(options, onLine){ //options: path, char
         }else{
             fs.open(options.path, 'r', function(err, fd) {
                 let bytesToRead = (charOffset.byteRange.end - charOffset.byteRange.start)
-                let buffer = Buffer.allocUnsafe(bytesToRead)
+                let buffer = Buffer.allocUnsafe ? Buffer.allocUnsafe(bytesToRead) : new Buffer(bytesToRead)
                 fs.read(fd, buffer, 0, bytesToRead, charOffset.byteRange.start, (err, bytesRead, buffer2) => {
                     dataLoaded(buffer2)
                     fs.close(fd)
