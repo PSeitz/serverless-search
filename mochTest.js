@@ -343,7 +343,7 @@ describe('Serverless DB', function() {
     it('should suggest', function() {
         console.log("test search123123123")
         console.log(process.cwd())
-        return searchindex.suggest('meanings.ger[]', 'majes').then(res => {
+        return searchindex.suggest({path:'meanings.ger[]', term:'majes'}).then(res => {
             console.log(JSON.stringify(res, null, 2))
             return Object.keys(res)
         })

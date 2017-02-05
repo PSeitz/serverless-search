@@ -27,6 +27,23 @@ function searchDb(dbfolder, request){
     
 }
 
+function suggestDb(dbfolder, path, term){
+
+    let parentDir = process.cwd()
+    if (!process.cwd().endsWith(dbfolder))
+        process.chdir(process.cwd()+'/'+dbfolder)
+
+    return searchindex.suggest(path, term)
+    .then(data => {
+        process.chdir(parentDir)
+        return data
+    }).catch(err => {
+        process.chdir(parentDir)
+        throw err
+    })
+    
+}
+
 let service = {
     searchDb: searchDb
 }

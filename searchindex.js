@@ -278,10 +278,15 @@ function sortByScore(hits) {
     })
 }
 
-function suggest(path, term){
-    return getHitsInField(path, {startsWith:true, includeValue:true}, term)
+function suggest(request){
+    request.skip = request.skip || 0
+    request.top = request.top || 10
+
+    return getHitsInField(request.path, {startsWith:true, includeValue:true}, request.term)
     .then(hitsToArray)
     .then(sortByScore)
+    .then(res => res.slice(request.skip, request.top))
+    .then(res => res.map(el => el.value))
 }
 
 function intersection(o1, o2) {
