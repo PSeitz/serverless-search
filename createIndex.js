@@ -18,15 +18,19 @@ function getValueID(data, value){
     return binarySearch(data, value)
 }
 
+function isInStopWords(term, options){
+    return options.stopwords.indexOf(term) >= 0
+}
+
 function getAllterms(data, path, options, existingTerms){
     options = options || {}
     let terms = existingTerms || {}
 
     forEachElementInPath(data, path, (value) => {
         let normalizedText = util.normalizeText(value)
-        terms[normalizedText] = true
+        if(!isInStopWords(normalizedText, options)) terms[normalizedText] = true
         if (options.tokenize) 
-            forEachToken(normalizedText, token =>  terms[token] = true)
+            forEachToken(normalizedText, token => {if(!isInStopWords(normalizedText, options)) terms[token] = true})
     })
     if (!existingTerms) return Object.keys(terms).sort() //Level 0
     return terms
@@ -120,6 +124,8 @@ function forEachToken(normalizedText, cb){
     // }
 }
 
+// forEachToken(util.normalizeText("(f) spielen (ein Musikinstrument, ein Musikstück)"), console.log.bind(console))
+
 // function isLastPath(paths, path){
 //     return paths.indexOf(path) === (paths.length -1)
 // }
@@ -131,6 +137,7 @@ function createFulltextIndex(data, path, options){
         path = util.removeArrayMarker(path)
 
         options = options || {}
+        options.stopwords = options.stopwords || []
         let allTerms = getAllterms(data, path, options)
 
         let tuples = []
@@ -149,12 +156,13 @@ function createFulltextIndex(data, path, options){
             forEachElementInPath(data, pathToAnchor, function (value, mainId, subObjId) {
                 if (isLast){
                     let normalizedText = util.normalizeText(value)
-                    let valId = getValueID(allTerms, normalizedText)
+                    if(isInStopWords(normalizedText, options)) return
 
+                    let valId = getValueID(allTerms, normalizedText)
                     // tuples.push((subObjId !== undefined) ? [valId, mainId, subObjId] : [valId, mainId])
                     tuples.push([valId , arguments[level + 1]])
                     if (options.tokenize && normalizedText.split(' ').length > 1) 
-                        forEachToken(normalizedText, token => tokens.push([getValueID(allTerms, token), valId]))
+                        forEachToken(normalizedText, token => {if(!isInStopWords(normalizedText, options)) tokens.push([getValueID(allTerms, token), valId])})
 
                 }else{
                     tuples.push([arguments[level + 1], arguments[1]])

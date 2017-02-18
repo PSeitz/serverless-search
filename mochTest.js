@@ -128,7 +128,8 @@ let data = [
         ],                        
         "meanings": {             
             "ger": [                
-                "(1) weich",          
+                "(1) weich",
+                "stopword"          
             ]                       
         },                        
         "ent_seq": "1605630"      
@@ -152,7 +153,7 @@ describe('Serverless DB', function() {
             { boost:'field1[].rank' , options:{type:'int'}}, 
             { fulltext:'field1[].text' }, 
             { fulltext:'kanji[].text' }, 
-            { fulltext:'meanings.ger[]', options:{tokenize:true} },
+            { fulltext:'meanings.ger[]', options:{tokenize:true, stopwords: ['stopword']} },
             { fulltext:'meanings.eng[]', options:{tokenize:true} }, 
             { boost:'kanji[].commonness' , options:{type:'int'}}, 
             { boost:'kana[].commonness', options:{type:'int'} }
@@ -195,15 +196,15 @@ describe('Serverless DB', function() {
             path:'meanings.eng[]',
             levenshtein_distance:1
         }}).then(res => {
-            console.log(JSON.stringify(res, null, 2))
+            // console.log(JSON.stringify(res, null, 2))
             return res
         })
         .should.eventually.have.deep.property('[0].meanings.eng[0]', 'will')
     })
 
     it('should search word non tokenized', function() {
-        console.log("test search123123123")
-        console.log(process.cwd())
+        // console.log("test search123123123")
+        // console.log(process.cwd())
         return searchDb.searchDb(dbfolder, {search: {
             term:'偉容',
             path:'kanji[].text',
@@ -266,8 +267,8 @@ describe('Serverless DB', function() {
     })
 
     it('should search and boost', function() {
-        console.log("test search123123123")
-        console.log(process.cwd())
+        // console.log("test search123123123")
+        // console.log(process.cwd())
         return searchDb.searchDb(dbfolder, {
             search: {
                 term:'意慾',
@@ -288,8 +289,6 @@ describe('Serverless DB', function() {
     })
 
     it('should search and double boost', function() {
-        console.log("test search123123123")
-        console.log(process.cwd())
         return searchDb.searchDb(dbfolder, {
             search: {
                 term:'awesome',
@@ -305,11 +304,11 @@ describe('Serverless DB', function() {
                 },
                 {
                     path:'field1[].rank',
-                    fun:rank => { console.log("HAAA " +rank); if(!rank)return 0; return 10 / rank}
+                    fun:rank => { if(!rank)return 0; return 10 / rank}
                 }
             ]
         }).then(res => {
-            console.log(JSON.stringify(res, null, 2))
+            // console.log(JSON.stringify(res, null, 2))
             return res
         })
         .should.eventually.have.length(2)
@@ -317,8 +316,6 @@ describe('Serverless DB', function() {
 
 
     it('should search and boost anchor', function() {
-        console.log("test search123123123")
-        console.log(process.cwd())
         return searchDb.searchDb(dbfolder, {
             search: {
                 term:'意慾',
@@ -341,10 +338,8 @@ describe('Serverless DB', function() {
 
 
     it('should suggest', function() {
-        console.log("test search123123123")
-        console.log(process.cwd())
         return searchindex.suggest({path:'meanings.ger[]', term:'majes'}).then(res => {
-            console.log(JSON.stringify(res, null, 2))
+            // console.log(JSON.stringify(res, null, 2))
             return Object.keys(res)
         })
         .should.eventually.have.length(5)
@@ -368,8 +363,6 @@ describe('Serverless DB', function() {
     })
 
     it('should rank exact matches pretty good', function() {
-        console.log("test search123123123")
-        console.log(process.cwd())
         return searchDb.searchDb(dbfolder, {
             search: {
                 term:'weich',
@@ -443,11 +436,11 @@ describe('Boost Minimal Example', function() {
             boost: [
                 {
                     path:'field1[].rank',
-                    fun:rank => { console.log("HAAA " +rank); if(!rank)return 0; return 10 / rank}
+                    fun:rank => { if(!rank)return 0; return 10 / rank}
                 }
             ]
         }).then(res => {
-            console.log(JSON.stringify(res, null, 2))
+            // console.log(JSON.stringify(res, null, 2))
             return res
         })
         .should.eventually.have.length(2)

@@ -282,7 +282,7 @@ function suggest(request){
     request.skip = request.skip || 0
     request.top = request.top || 10
 
-    return getHitsInField(request.path, {startsWith:true, includeValue:true}, request.term)
+    return getHitsInField(request.path, {startsWith:true, includeValue:true}, request.term.toLowerCase())
     .then(hitsToArray)
     .then(sortByScore)
     .then(res => res.slice(request.skip, request.top))

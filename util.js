@@ -10,10 +10,12 @@ function removeArrayMarker(path){
 }
 
 function normalizeText(text){
-    text = text.replace(/ *\([^)]*\) */g, ' ') // remove everything in braces
+    // text = text.replace(/ *\([^)]*\) */g, ' ') // remove everything in braces
+    text = text.replace(/ *\([fmn\d)]*\) */g, ' ') // remove (f)(n)(m)(1)...(9)
+    text = text.replace(/[\(\)]/g, ' ') // remove braces
     text = text.replace(/[{}'"“]/g, '') // remove ' " {}
     text = text.replace(/\s\s+/g, ' ') // replace tabs, newlines, double spaces with single spaces
-    text = text.replace(/[,.]/g, '') // remove , .
+    text = text.replace(/[,.…]/g, '') // remove , .
     text = text.replace(/[;・’-]/g, '') // remove ;・’-
     text = text.toLowerCase()
     return text.trim()
