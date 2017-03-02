@@ -47,10 +47,10 @@ function forEachElementInPath(data, path, cb) {
     path = util.removeArrayMarker(path)
     let paths = path.split('.')
     let valueId = 0
-    let currentEl
+
     for (let mainId = 0; mainId < data.length; mainId++) {  
         let entry = data[mainId]
-        currentEl = entry
+        let currentEl = entry
         // let mainId = entry.ent_seq
         for (let i = 0; i < paths.length; i++) {
             let comp = paths[i]
