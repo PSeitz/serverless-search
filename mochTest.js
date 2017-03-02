@@ -210,10 +210,7 @@ describe('Serverless DB', function() {
             path:'kanji[].text',
             levenshtein_distance:0,
             firstCharExactMatch:true
-        }}).then(res => {
-            // console.log(JSON.stringify(res, null, 2))
-            return res
-        })
+        }})
         .should.eventually.have.length(1)
     })
 
@@ -225,6 +222,14 @@ describe('Serverless DB', function() {
                 levenshtein_distance:0,
                 firstCharExactMatch:true
             }
+        })
+        .should.eventually.have.length(1)
+    })
+
+    it('AND connect hits same field', function() {
+        return searchDb.searchDb(dbfolder, {
+            AND: [{search: { term:'Aussehen', path:'meanings.ger[]'}},
+                {search: { term:'majestätisches', path:'meanings.ger[]'}}]
         }).then(res => {
             // console.log(JSON.stringify(res, null, 2))
             return res

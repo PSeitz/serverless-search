@@ -22,9 +22,9 @@ function isInStopWords(term, options){
     return options.stopwords.indexOf(term) >= 0
 }
 
-function getAllterms(data, path, options, existingTerms){
+function getAllterms(data, path, options){
     options = options || {}
-    let terms = existingTerms || {}
+    let terms = {}
 
     forEachElementInPath(data, path, (value) => {
         let normalizedText = util.normalizeText(value)
@@ -32,8 +32,7 @@ function getAllterms(data, path, options, existingTerms){
         if (options.tokenize) 
             forEachToken(normalizedText, token => {if(!isInStopWords(normalizedText, options)) terms[token] = true})
     })
-    if (!existingTerms) return Object.keys(terms).sort() //Level 0
-    return terms
+    return Object.keys(terms).sort()
 }
 
 // let terms = getAllterms(data, "kanji.text".split("."))
@@ -133,17 +132,15 @@ function forEachToken(normalizedText, cb){
 function createFulltextIndex(data, path, options){
     // let subfolder = options.subfolder || ''
     return new Promise((resolve) => {
-        let origPath = path
-        path = util.removeArrayMarker(path)
 
         options = options || {}
         options.stopwords = options.stopwords || []
         let allTerms = getAllterms(data, path, options)
 
-        let tuples = []
+        // let tuples = []
         let tokens = []
 
-        let paths = util.getStepsToAnchor(origPath)
+        let paths = util.getStepsToAnchor(path)
         console.log("StepsToAnchor")
         console.log(paths)
 
@@ -174,18 +171,18 @@ function createFulltextIndex(data, path, options){
             writeFileSync(pathName+'.valueIdToParent.mainIds', new Buffer(new Uint32Array(tuples.map(tuple => tuple[1])).buffer))
         })
 
-        // writeFileSync(origPath+'.valIds', new Buffer(new Uint32Array(tuples.map(tuple => tuple[0])).buffer))
-        // writeFileSync(origPath+'.mainIds', new Buffer(new Uint32Array(tuples.map(tuple => tuple[1])).buffer))
+        // writeFileSync(path+'.valIds', new Buffer(new Uint32Array(tuples.map(tuple => tuple[0])).buffer))
+        // writeFileSync(path+'.mainIds', new Buffer(new Uint32Array(tuples.map(tuple => tuple[1])).buffer))
 
         if (tokens.length > 0) {
             tokens.sort(sortFirstColumn)
-            writeFileSync(origPath+'.tokens.tokenValIds', new Buffer(new Uint32Array(tokens.map(tuple => tuple[0])).buffer))
-            writeFileSync(origPath+'.tokens.parentValId', new Buffer(new Uint32Array(tokens.map(tuple => tuple[1])).buffer))
+            writeFileSync(path+'.tokens.tokenValIds', new Buffer(new Uint32Array(tokens.map(tuple => tuple[0])).buffer))
+            writeFileSync(path+'.tokens.parentValId', new Buffer(new Uint32Array(tokens.map(tuple => tuple[1])).buffer))
         }
         // writeFileSync(path, new Buffer(JSON.stringify(allTerms)))
-        writeFileSync(origPath, allTerms.join('\n'))
-        writeFileSync(origPath+'.length', new Buffer(new Uint32Array(allTerms.map(term => term.length)).buffer))
-        creatCharOffsets(origPath, resolve)
+        writeFileSync(path, allTerms.join('\n'))
+        writeFileSync(path+'.length', new Buffer(new Uint32Array(allTerms.map(term => term.length)).buffer))
+        creatCharOffsets(path, resolve)
     })
     .catch(err => {
         throw new Error('Error while creating index: ' + path + ' : '+err.toString())
@@ -237,7 +234,6 @@ function creatCharOffsets(path, resolve){
 
 function createBoostIndex(data, path, options){
     options = options || {}
-    // let origPath = path
     // path = util.removeArrayMarker(path)
 
     // let level = util.getLevel(pathToAnchor)

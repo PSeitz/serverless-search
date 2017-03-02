@@ -61,10 +61,10 @@ class CharOffset{
         this.byteOffsetsEnd = getIndex(path+'.charOffsets.byteOffsetsEnd')
         this.lineOffsets = getIndex(path+'.charOffsets.lineOffset')
     }
-    getClosestOffset(linePos){
-        let index = lowerBoundSearch(this.lineOffsets, linePos)
-        return this.getOffsetInfo(index)
-    }
+    // getClosestOffset(linePos){
+    //     let index = lowerBoundSearch(this.lineOffsets, linePos)
+    //     return this.getOffsetInfo(index)
+    // }
     getCharOffsetInfo(char){
         let charIndex = binarySearch(this.chars, char)
         return this.getOffsetInfo(charIndex)
@@ -100,16 +100,11 @@ class TokensIndexKeyValueStore{
         this.path = path
         this.store = new IndexKeyValueStore(path+'.tokens.tokenValIds', path+'.tokens.parentValId')
     }
-    get keys() { return this.store.keys }
-    get parentValIds(){ return this.store.values }
     getParentValId(key){
         return this.store.getValue(key)
     }
     getParentValIds(key){
         return this.store.getValues(key)
-    }
-    getTextForValueId(index){
-        return getLine(this.path, index)
     }
 }
 
@@ -126,9 +121,9 @@ function getTextLines(options, onLine){ //options: path, char
         charOffset = getCreateCharOffsets(options.path).getCharOffsetInfo(options.char)
         console.log(options.char + " START at Line: " + charOffset.lineOffset)
     }
-    if (options.linePos) {
-        charOffset = getCreateCharOffsets(options.path).getClosestOffset(options.linePos)
-    }
+    // if (options.linePos) {
+    //     charOffset = getCreateCharOffsets(options.path).getClosestOffset(options.linePos)
+    // }
     return new Promise(resolve => {
         function dataLoaded(data){
             let lines = data.toString('utf8').split("\n")
@@ -161,16 +156,16 @@ function getTextLines(options, onLine){ //options: path, char
     })
 }
 
-function getLine(path, linePos){ //options: path, char
-    return new Promise(resolve => {
-        getTextLines({path:path, linePos:linePos}, (lineText, currentLinePos) => {
-            if (currentLinePos == linePos) {
-                // console.log(lineText)
-                resolve(lineText)
-            }
-        })
-    })
-}
+// function getLine(path, linePos){ //options: path, char
+//     return new Promise(resolve => {
+//         getTextLines({path:path, linePos:linePos}, (lineText, currentLinePos) => {
+//             if (currentLinePos == linePos) {
+//                 // console.log(lineText)
+//                 resolve(lineText)
+//             }
+//         })
+//     })
+// }
 
 function getDefaultScore(term1, term2){
     return 2/(levenshtein.get(term1, term2) + 0.2 )
@@ -208,7 +203,7 @@ function addTokenResults(hits, path){
                 if(hits[tokenParentvalId]) hits[tokenParentvalId].score += adjustedScore
                 else {
                     hits[tokenParentvalId] = {score:adjustedScore}
-                    if(hits[valueId].value) hits[tokenParentvalId].value = hits[valueId].value
+                    // if(hits[valueId].value) hits[tokenParentvalId].value = hits[valueId].value // transport debug info
                 }
             })
         }
@@ -250,8 +245,7 @@ function getHitsInField(path, options, term){
         if (checksmethod(check => check(line))){
             
             let score = options.customScore ? options.customScore(line, term) : getDefaultScore(line, term)
-            if(hits[linePos]) hits[linePos].score += score
-            else hits[linePos] = {score:score}
+            hits[linePos] = {score:score}
 
             // console.log("Hit: "+line + " linePos:"+linePos + " score:"+score)
             if (options.includeValue) hits[linePos].value = line
