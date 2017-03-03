@@ -38,15 +38,12 @@ function getAllterms(data, path, options){
 // let terms = getAllterms(data, "kanji.text".split("."))
 // console.log(terms[1000]);
 
-function last(array) {
-    var length = array == null ? 0 : array.length
-    return length ? array[length - 1] : undefined
-}
 
 function forEachElementInPath(data, path, cb) {
     path = util.removeArrayMarker(path)
     let paths = path.split('.')
     let valueId = 0
+    let lastPath = paths[paths.length - 1]
 
     for (let mainId = 0; mainId < data.length; mainId++) {  
         let entry = data[mainId]
@@ -58,7 +55,7 @@ function forEachElementInPath(data, path, cb) {
             currentEl = currentEl[comp]
 
             if(Array.isArray(currentEl)){
-                if (last(paths) == comp){
+                if (lastPath == comp){
                     currentEl.forEach(el => {
                         cb(el, mainId, valueId)
                         valueId++
@@ -66,9 +63,9 @@ function forEachElementInPath(data, path, cb) {
                 }else{
                     comp = paths[++i] // move to next level
                     for(let subarrEl of currentEl){
-                        // if (last(paths) == comp) 
+                        // if (lastPath == comp) 
                         // if (subarrEl[comp] === undefined) continue
-                        if (last(paths) == comp && subarrEl[comp]){
+                        if (lastPath == comp && subarrEl[comp]){
                             cb(subarrEl[comp], mainId, valueId)
                         }else{
                             // throw new Error('level 3 not supported')
@@ -78,7 +75,7 @@ function forEachElementInPath(data, path, cb) {
                     }
                 }
             }else{
-                if (last(paths) == comp){
+                if (lastPath == comp){
                     cb(currentEl, mainId, valueId)
                 }
             }
